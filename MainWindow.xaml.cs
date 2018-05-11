@@ -10,6 +10,12 @@ using System.Windows.Media.Imaging;
 using Microsoft.ProjectOxford.Common.Contract;
 using Microsoft.ProjectOxford.Face;
 using Microsoft.ProjectOxford.Face.Contract;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Convolution;
+using SixLabors.Primitives;
+using System.Drawing;
 
 namespace FaceTutorial
 {
@@ -58,7 +64,6 @@ namespace FaceTutorial
 
             Uri fileUri = new Uri(filePath);
             BitmapImage bitmapSource = new BitmapImage();
-
             bitmapSource.BeginInit();
             bitmapSource.CacheOption = BitmapCacheOption.None;
             bitmapSource.UriSource = fileUri;
@@ -70,7 +75,18 @@ namespace FaceTutorial
             Title = "Detecting...";
             faces = await UploadAndDetectFaces(filePath);
             Title = String.Format("Detection Finished. {0} face(s) detected", faces.Length);
+            FaceRectangle[] faceRectangles = new FaceRectangle[faces.Length];
 
+            for( int i=0; i<faces.Length;i++)
+            {
+                faceRectangles[i] = faces[i].FaceRectangle;
+            }
+            BlurFaces(faceRectangles, filePath);
+            /*BitmapImage bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.;
+            FacePhoto.Source =  img;*/
+            
             if (faces.Length > 0)
             {
                 // Prepare to draw rectangles around the faces.
@@ -81,22 +97,22 @@ namespace FaceTutorial
                 double dpi = bitmapSource.DpiX;
                 resizeFactor = 96 / dpi;
                 faceDescriptions = new String[faces.Length];
-
+                
                 for (int i = 0; i < faces.Length; ++i)
                 {
                     Face face = faces[i];
-
                     // Draw a rectangle on the face.
                     drawingContext.DrawRectangle(
-                        Brushes.Transparent,
-                        new Pen(Brushes.Red, 2),
-                        new Rect(
-                            face.FaceRectangle.Left * resizeFactor,
-                            face.FaceRectangle.Top * resizeFactor,
-                            face.FaceRectangle.Width * resizeFactor,
-                            face.FaceRectangle.Height * resizeFactor
-                            )
-                    );
+                         System.Windows.Media.Brushes.Transparent,
+                         new System.Windows.Media.Pen(System.Windows.Media.Brushes.Red, 2),
+                          new Rect(
+                             face.FaceRectangle.Left * resizeFactor,
+                             face.FaceRectangle.Top * resizeFactor,
+                             face.FaceRectangle.Width * resizeFactor,
+                             face.FaceRectangle.Height * resizeFactor
+                             )
+                     );
+                    
 
                     // Store the face description.
                     faceDescriptions[i] = FaceDescription(face);
@@ -118,6 +134,7 @@ namespace FaceTutorial
                 // Set the status bar text.
                 faceDescriptionStatusBar.Text = "Place the mouse pointer over a face to see the face description.";
             }
+            
         }
 
         // Displays the face description when the mouse is over a face rectangle.
@@ -130,7 +147,7 @@ namespace FaceTutorial
                 return;
 
             // Find the mouse position relative to the image.
-            Point mouseXY = e.GetPosition(FacePhoto);
+            System.Windows.Point mouseXY = e.GetPosition(FacePhoto);
 
             ImageSource imageSource = FacePhoto.Source;
             BitmapSource bitmapSource = (BitmapSource)imageSource;
@@ -140,7 +157,6 @@ namespace FaceTutorial
 
             // Check if this mouse position is over a face rectangle.
             bool mouseOverFace = false;
-
             for (int i = 0; i < faces.Length; ++i)
             {
                 FaceRectangle fr = faces[i].FaceRectangle;
@@ -163,9 +179,29 @@ namespace FaceTutorial
                 faceDescriptionStatusBar.Text = "Place the mouse pointer over a face to see the face description.";
         }
 
+        private static void BlurFaces(FaceRectangle[] faceRects, string sourceImage)
+        {
+            Image<Rgba32> image;
+            using (FileStream stream = File.OpenRead(sourceImage))
+            {
+                 image = SixLabors.ImageSharp.Image.Load(stream);
+
+                foreach (var faceRect in faceRects)
+                {
+                    var rectangle = new SixLabors.Primitives.Rectangle(
+                        faceRect.Left,
+                        faceRect.Top,
+                        faceRect.Width,
+                        faceRect.Height);
+                    
+                    image = image.Clone(img => img.BoxBlur<Rgba32>(20,rectangle));
+                }
+            }
+            image.Save<Rgba32>("d:\\test.jpg");
+            //return image;
+        }
 
         // Uploads the image file and calls Detect Faces.
-
         private async Task<Face[]> UploadAndDetectFaces(string imageFilePath)
         {
             // The list of Face attributes to return.
