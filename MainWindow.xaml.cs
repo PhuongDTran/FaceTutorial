@@ -82,11 +82,9 @@ namespace FaceTutorial
                 faceRectangles[i] = faces[i].FaceRectangle;
             }
             BlurFaces(faceRectangles, filePath);
-            /*BitmapImage bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.;
-            FacePhoto.Source =  img;*/
-            
+            //BitmapImage bitmap = BlurFaces(faceRectangles, filePath);
+            //FacePhoto.Source = bitmap;
+
             if (faces.Length > 0)
             {
                 // Prepare to draw rectangles around the faces.
@@ -129,12 +127,11 @@ namespace FaceTutorial
                     PixelFormats.Pbgra32);
 
                 faceWithRectBitmap.Render(visual);
-                FacePhoto.Source = faceWithRectBitmap;
+                // TODO: FacePhoto.Source = faceWithRectBitmap;
 
                 // Set the status bar text.
                 faceDescriptionStatusBar.Text = "Place the mouse pointer over a face to see the face description.";
             }
-            
         }
 
         // Displays the face description when the mouse is over a face rectangle.
@@ -179,12 +176,12 @@ namespace FaceTutorial
                 faceDescriptionStatusBar.Text = "Place the mouse pointer over a face to see the face description.";
         }
 
-        private static void BlurFaces(FaceRectangle[] faceRects, string sourceImage)
+        private void BlurFaces(FaceRectangle[] faceRects, string sourceImage)
         {
             Image<Rgba32> image;
             using (FileStream stream = File.OpenRead(sourceImage))
             {
-                 image = SixLabors.ImageSharp.Image.Load(stream);
+                image = SixLabors.ImageSharp.Image.Load(stream);
 
                 foreach (var faceRect in faceRects)
                 {
@@ -197,8 +194,23 @@ namespace FaceTutorial
                     image = image.Clone(img => img.BoxBlur<Rgba32>(20,rectangle));
                 }
             }
-            image.Save<Rgba32>("d:\\test.jpg");
-            //return image;
+            image.Save("D:\\blurred.jpg");
+            // stackoverflow.com/questions/5782913/how-to-convert-from-type-image-to-type-bitmapimage
+            /*MemoryStream memoryStream = new MemoryStream(image.SavePixelData());
+            BitmapImage bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.StreamSource = memoryStream;
+            bitmap.EndInit();*/
+            MemoryStream memoryStream = new MemoryStream();
+            image.Save(memoryStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+            BitmapImage bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.UriSource = null;
+            bitmap.StreamSource = memoryStream;
+            bitmap.EndInit();
+
+            FacePhoto.Source = bitmap;
         }
 
         // Uploads the image file and calls Detect Faces.
