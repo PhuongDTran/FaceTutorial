@@ -14,6 +14,9 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Convolution;
+using SixLabors.ImageSharp.Processing.Drawing;
+using SixLabors.ImageSharp.Processing.Drawing.Pens;
+using SixLabors.ImageSharp.Processing.Drawing.Brushes;
 using SixLabors.Primitives;
 using System.Drawing;
 
@@ -82,56 +85,6 @@ namespace FaceTutorial
                 faceRectangles[i] = faces[i].FaceRectangle;
             }
             BlurFaces(faceRectangles, filePath);
-            //BitmapImage bitmap = BlurFaces(faceRectangles, filePath);
-            //FacePhoto.Source = bitmap;
-
-            if (faces.Length > 0)
-            {
-                // Prepare to draw rectangles around the faces.
-                DrawingVisual visual = new DrawingVisual();
-                DrawingContext drawingContext = visual.RenderOpen();
-                drawingContext.DrawImage(bitmapSource,
-                    new Rect(0, 0, bitmapSource.Width, bitmapSource.Height));
-                double dpi = bitmapSource.DpiX;
-                resizeFactor = 96 / dpi;
-                faceDescriptions = new String[faces.Length];
-                
-                for (int i = 0; i < faces.Length; ++i)
-                {
-                    Face face = faces[i];
-                    // Draw a rectangle on the face.
-                    drawingContext.DrawRectangle(
-                         System.Windows.Media.Brushes.Transparent,
-                         new System.Windows.Media.Pen(System.Windows.Media.Brushes.Red, 2),
-                          new Rect(
-                             face.FaceRectangle.Left * resizeFactor,
-                             face.FaceRectangle.Top * resizeFactor,
-                             face.FaceRectangle.Width * resizeFactor,
-                             face.FaceRectangle.Height * resizeFactor
-                             )
-                     );
-                    
-
-                    // Store the face description.
-                    faceDescriptions[i] = FaceDescription(face);
-                }
-
-                drawingContext.Close();
-
-                // Display the image with the rectangle around the face.
-                RenderTargetBitmap faceWithRectBitmap = new RenderTargetBitmap(
-                    (int)(bitmapSource.PixelWidth * resizeFactor),
-                    (int)(bitmapSource.PixelHeight * resizeFactor),
-                    96,
-                    96,
-                    PixelFormats.Pbgra32);
-
-                faceWithRectBitmap.Render(visual);
-                // TODO: FacePhoto.Source = faceWithRectBitmap;
-
-                // Set the status bar text.
-                faceDescriptionStatusBar.Text = "Place the mouse pointer over a face to see the face description.";
-            }
         }
 
         // Displays the face description when the mouse is over a face rectangle.
@@ -182,7 +135,7 @@ namespace FaceTutorial
             using (FileStream stream = File.OpenRead(sourceImage))
             {
                 image = SixLabors.ImageSharp.Image.Load(stream);
-
+                IPen<Rgba32> pen = new Pen<Rgba32>(new SolidBrush<Rgba32>(Rgba32.Red) ,2);
                 foreach (var faceRect in faceRects)
                 {
                     var rectangle = new SixLabors.Primitives.Rectangle(
@@ -190,23 +143,20 @@ namespace FaceTutorial
                         faceRect.Top,
                         faceRect.Width,
                         faceRect.Height);
-                    
-                    image = image.Clone(img => img.BoxBlur<Rgba32>(20,rectangle));
+                    image.Mutate(img => {
+                        img.BoxBlur<Rgba32>(20, rectangle);
+                        img.Draw(pen, rectangle);
+                    });
                 }
             }
-            image.Save("D:\\blurred.jpg");
+
             // stackoverflow.com/questions/5782913/how-to-convert-from-type-image-to-type-bitmapimage
-            /*MemoryStream memoryStream = new MemoryStream(image.SavePixelData());
-            BitmapImage bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.StreamSource = memoryStream;
-            bitmap.EndInit();*/
             MemoryStream memoryStream = new MemoryStream();
             image.Save(memoryStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
             BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.UriSource = null;
+            //bitmap.CacheOption = BitmapCacheOption.OnLoad;
+           // bitmap.UriSource = null;
             bitmap.StreamSource = memoryStream;
             bitmap.EndInit();
 
