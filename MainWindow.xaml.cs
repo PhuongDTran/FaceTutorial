@@ -78,18 +78,17 @@ namespace FaceTutorial
             Title = "Detecting...";
             faces = await UploadAndDetectFaces(filePath);
             Title = String.Format("Detection Finished. {0} face(s) detected", faces.Length);
-            FaceRectangle[] faceRectangles = new FaceRectangle[faces.Length];
 
+            FaceRectangle[] faceRectangles = new FaceRectangle[faces.Length];
             for( int i=0; i<faces.Length;i++)
             {
                 faceRectangles[i] = faces[i].FaceRectangle;
             }
+            //blur faces and also draw a rectangle around each face.
             BlurFaces(faceRectangles, filePath);
         }
 
         // Displays the face description when the mouse is over a face rectangle.
-
-
         private void FacePhoto_MouseMove(object sender, MouseEventArgs e)
         {
             // If the REST call has not completed, return from this method.
