@@ -2,12 +2,12 @@ using GalaSoft.MvvmLight;
 
 namespace FaceTutorial.ViewModel
 {
-    public class MainViewModel : ViewModelBase
+    public class PhotoViewModel : ViewModelBase
     {
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel()
+        public PhotoViewModel()
         {
             ////if (IsInDesignMode)
             ////{

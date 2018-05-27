@@ -41,14 +41,14 @@ namespace FaceTutorial.ViewModel
             ////    SimpleIoc.Default.Register<IDataService, DataService>();
             ////}
 
-            SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<PhotoViewModel>();
         }
 
-        public MainViewModel Main
+        public PhotoViewModel Main
         {
             get
             {
-                return ServiceLocator.Current.GetInstance<MainViewModel>();
+                return ServiceLocator.Current.GetInstance<PhotoViewModel>();
             }
         }
         
